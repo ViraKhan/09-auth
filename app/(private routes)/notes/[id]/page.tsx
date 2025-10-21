@@ -4,7 +4,7 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import NoteDetailsClient from "./NoteDetails.client";
-import { fetchNoteById } from "@/lib/api/clientApi";
+import { fetchNoteByIdServer } from "@/lib/api/serverApi";
 import type { Metadata } from "next";
 
 interface NoteDetailsProps {
@@ -22,7 +22,7 @@ export async function generateMetadata({
     const { id } = await params; // Очікуємо на Promise
 
     try {
-        const note = await fetchNoteById(id);
+        const note = await fetchNoteByIdServer(id);
         const snippet =
             note.content.length > 150
                 ? `${note.content.slice(0, 150)}…`
@@ -59,7 +59,7 @@ const NoteDetails = async ({ params }: NoteDetailsProps) => {
 
   await queryClient.prefetchQuery({
     queryKey: ["note", id],
-    queryFn: () => fetchNoteById(id),
+    queryFn: () => fetchNoteByIdServer(id),
   });
 
   return (
