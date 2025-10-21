@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 export default function Home() {
   return (
-    <main className={css.container}>
+   <main className={css.container}>
       <h1 className={css.title}>Welcome to NoteHub</h1>
 
       <section className={css.section}>
