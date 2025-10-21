@@ -4,11 +4,12 @@ import Link from "next/link";
 import css from "./NoteList.module.css";
 import type { Note, NoteId } from "@/types/note";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteNote } from "@/lib/api";
+import { deleteNote } from "@/lib/api/clientApi";
 import { useState } from "react";
 
 interface NoteListProps {
   notes: Note[];
+  onDeleted?: () => void; 
 }
 
 export default function NoteList({ notes }: NoteListProps) {

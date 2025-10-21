@@ -1,61 +1,67 @@
 'use client';
 
-import { fetchNotes } from '@/lib/api';
 import NoteList from '@/components/NoteList/NoteList';
 import Pagination from '@/components/Pagination/Pagination';
 import SearchBox from '@/components/SearchBox/SearchBox';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { useState } from 'react';
-import { useDebouncedCallback } from 'use-debounce';
+import { useState, useEffect } from 'react';
+import { useDebounce } from 'use-debounce';
+import toast, { Toaster } from 'react-hot-toast';
+import { fetchNotes } from '@/lib/api/clientApi';
 import css from './Notes.client.module.css';
 import Link from 'next/link';
-import type { NoteTag } from '@/types/note';
 
-const NotesClient = ({ tag }: { tag?: NoteTag }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const perPage = 12;
+interface NotesClientProps {
+  tag: string;
+}
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['notes', searchQuery, currentPage, perPage, tag],
-    queryFn: () =>
-      fetchNotes({
-        page: currentPage,
-        query: searchQuery,
-        tag,
-      }),
+const NotesClient = ({ tag }: NotesClientProps) => {
+  const [page, setPage] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedQuery] = useDebounce(searchQuery, 500);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, tag]);
+
+  const { data: notesData, isLoading } = useQuery({
+    queryKey: ['notes', page, debouncedQuery, tag],
+    queryFn: () => fetchNotes({ page, query: debouncedQuery, tag }),
     placeholderData: keepPreviousData,
-    refetchOnMount: true,
   });
 
-  const { notes = [], totalPages } = data || {};
+  const handlePageClick = (page: number): void => {
+    setPage(page);
+  };
 
-  const handleSearch = useDebouncedCallback((val: string) => {
-    setSearchQuery(val);
-    setCurrentPage(1);
-  }, 300);
+  const handleDeleted = () => toast.success('Note deleted successfully!');
 
   return (
-    <div className={css.app}>
-      <div className={css.toolbar}>
-        <SearchBox onSearch={handleSearch} />
-        {notes.length > 0 && totalPages && totalPages > 1 && (
-  <Pagination
-    pageCount={totalPages}
-    currentPage={currentPage}
-     onPageChange={setCurrentPage}
-  />
-)}
-        <Link className={css.link} href="/notes/action/create">
+    <div>
+      <Toaster position="top-right" />
+      <header className={css.toolbar}>
+        <SearchBox value={searchQuery} onChange={setSearchQuery} />
+        {notesData && notesData.totalPages > 1 && (
+          <Pagination
+            pageCount={notesData.totalPages}
+            currentPage={page}
+            onPageChange={handlePageClick}
+          />
+        )}
+        {/* замість кнопки тепер посилання */}
+        <Link href="/notes/action/create" className={css.button}>
           Create note +
         </Link>
-      </div>
-
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Failed to load notes.</p>}
-      {!isLoading && notes.length === 0 && <p>No notes found.</p>}
-
-      {notes.length > 0 && <NoteList notes={notes} />}
+      </header>
+      <main>
+        {isLoading && <p>Loading notes...</p>}
+        {notesData && (
+          <NoteList
+            notes={notesData.notes}
+            onDeleted={handleDeleted}
+          />
+        )}
+      </main>
     </div>
   );
 };

@@ -4,76 +4,67 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import NotesClient from './Notes.client';
-import { fetchNotes } from '@/lib/api';
-import { NoteTag } from '@/types/note';
-import { notFound } from 'next/navigation';
-import { Metadata } from 'next';
+import { fetchNotesServer } from '@/lib/api/serverApi';
+import type { Metadata } from "next";
 
-const staticTags: NoteTag[] = [
-  'Todo',
-  'Work',
-  'Personal',
-  'Meeting',
-  'Shopping',
-];
+// Типізуємо `params` як Promise
+interface NotesPageProps {
+  params: Promise<{ slug?: string[] }>;
+}
 
-type Props = {
-  params: { slug?: string[] }; 
-};
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const tag = params.slug?.[0] ?? 'All';
 
-  if (tag !== 'All' && !staticTags.includes(tag as NoteTag)) notFound();
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const { slug } = await params; // Очікуємо на Promise
+  const rawTag = slug?.[0];
+  const tag = rawTag && rawTag !== "All" ? rawTag : "All";
+
+  const title = `Notes – ${tag} | NoteHub`;
+  const description =
+      tag === "All"
+          ? "Browse all your NoteHub notes."
+          : `Browse your NoteHub notes filtered by tag: ${tag}.`;
+
+  const url = `${siteUrl}/notes/filter/${tag}`;
 
   return {
-    title: `Category: ${tag}`,
-    description: `List of notes for a category ${tag}`,
-    openGraph: {
-      title: `Category: ${tag}`,
-      description: `NoteHub list of notes for a category ${tag}`,
-      url: `https://08-zustand-six-opal.vercel.app/notes/filter/${tag}`,
-      images: [
-        {
-          url: 'https://ac.goit.global/fullstack/react/notehub-og-meta.jpg',
-          width: 1200,
-          height: 630,
-          alt: 'NoteHub',
-        },
-      ],
-    },
+      title,
+      description,
+      openGraph: {
+          title,
+          description,
+          url,
+          images: ["/notehub-og-meta.webp"],
+          type: "website",
+      },
   };
 }
 
-const NotesPage = async ({ params }: Props) => {
-  const tag = params.slug?.[0] ?? 'All';
-
-  if (tag !== 'All' && !staticTags.includes(tag as NoteTag)) notFound();
-
+export default async function NotesFilterPage({ params }: NotesPageProps) {
   const queryClient = new QueryClient();
-  const search = '';
-  const page = 1;
-  const perPage = 10;
 
-  //  NoteTag | undefined для fetchNotes і NotesClient
-  const tagForFetch: NoteTag | undefined = tag === 'All' ? undefined : (tag as NoteTag);
+  const resolvedParams = await params; // Очікуємо на Promise
+  const tag =
+      resolvedParams.slug?.[0] && resolvedParams.slug[0] !== "All"
+          ? resolvedParams.slug[0]
+          : "";
 
-  // Prefetch даних
   await queryClient.prefetchQuery({
-    queryKey: ['notes', search, page, perPage, tagForFetch],
-    queryFn: () =>
-      fetchNotes({
-        page,
-        query: search,
-        tag: tagForFetch,
-      }),
+      queryKey: ["notes", 1, "", tag],
+      queryFn: () => fetchNotesServer({ page: 1, query: "", tag }),
   });
 
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <NotesClient tag={tagForFetch} />
-    </HydrationBoundary>
-  );
-};
+  const initialNotes = await fetchNotesServer({ page: 1, query: "", tag });
+  queryClient.setQueryData(["notes", 1, "", tag], initialNotes);
 
-export default NotesPage;
+  return (
+      <HydrationBoundary state={dehydrate(queryClient)}>
+          <NotesClient tag={tag} />
+      </HydrationBoundary>
+  );
+}

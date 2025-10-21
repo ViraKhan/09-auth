@@ -20,7 +20,14 @@ export type Category = (typeof NoteTagAll)[number];
 export type SortBy = "title" | "createdAt" | "updatedAt";
 export type Tag = Note["tag"];
 export type NoteId = Note["id"];
+
 export interface FetchNotesResponse {
-    notes: Note[];
-    totalPages: number;
+  notes: Note[];
+  totalPages: number;
+}
+
+export interface NewNotePayload {
+  title: string;
+  content: string;
+  tag: NoteTag;
 }

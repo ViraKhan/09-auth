@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { AxiosResponse } from "axios";
-import { api as serverApiClient,  } from "@/app/api/api";
+import { api as serverApiClient } from "@/app/api/api";
 import type { Note, FetchNotesResponse } from "@/types/note";
 import { User } from "@/types/user";
 
@@ -18,7 +18,7 @@ export const checkSessionServer = async (): Promise<
     return response;
 };
 
-// Функція для отримання поточного користувача на сервері
+// 3. Функція для отримання поточного користувача на сервері
 export const getCurrentUserServer = async (): Promise<User> => {
     const cookieStore = await cookies();
     const { data } = await serverApiClient.get<User>("/users/me", {

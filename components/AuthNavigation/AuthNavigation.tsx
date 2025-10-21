@@ -1,40 +1,62 @@
-import css from "./AuthNavigation.module.css";
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { useAuthStore } from "@/lib/store/authStore";
+import { signOut } from "@/lib/api/clientApi";
+import css from "./AuthNavigation.module.css";
 
-export default function AuthNavigation() {
-  const isAuthenticated = false; // замінити на реальний стан автентифікації
-  const userEmail = "user@example.com"; // замінити на реальну електронну пошту
+const AuthNavigation = () => {
+    const router = useRouter();
+    const { isAuthenticated, user, clearAuthState } = useAuthStore();
 
-  return (
-    <nav>
-      <ul className={css.navigationList}>
-        {isAuthenticated ? (
-          <>
-            <li className={css.navigationItem}>
-              <Link href="/profile" prefetch={false} className={css.navigationLink}>
-                Profile
-              </Link>
-            </li>
-            <li className={css.navigationItem}>
-              <p className={css.userEmail}>{userEmail}</p>
-              <button className={css.logoutButton}>Logout</button>
-            </li>
-          </>
-        ) : (
-          <>
-            <li className={css.navigationItem}>
-              <Link href="/sign-in" prefetch={false} className={css.navigationLink}>
-                Login
-              </Link>
-            </li>
-            <li className={css.navigationItem}>
-              <Link href="/sign-up" prefetch={false} className={css.navigationLink}>
-                Sign up
-              </Link>
-            </li>
-          </>
-        )}
-      </ul>
-    </nav>
-  );
-}
+const handleLogout = async () => {
+        try {
+            await signOut();
+            clearAuthState(); // Очищаем состояние в Zustand
+            toast.success("You have successfully logged out!");
+            router.push("/sign-in");
+        } catch {
+            toast.error("Logout failed. Please try again.");
+        }
+    };
+
+    return (
+        <>
+            {isAuthenticated && user ? (
+                <>
+                    <li className={css.navigationItem}>
+                        <Link href="/profile" className={css.navigationLink}>
+                            Profile
+                        </Link>
+                    </li>
+                    <li className={css.navigationItem}>
+                        <span className={css.userEmail}>{user.email}</span>
+                        <button
+                            onClick={handleLogout}
+                            className={css.logoutButton}
+                        >
+                            Logout
+                        </button>
+                    </li>
+                </>
+            ) : (
+                <>
+                    <li className={css.navigationItem}>
+                        <Link href="/sign-in" className={css.navigationLink}>
+                            Login
+                        </Link>
+                    </li>
+                    <li className={css.navigationItem}>
+                        <Link href="/sign-up" className={css.navigationLink}>
+                            Sign up
+                        </Link>
+                    </li>
+                </>
+            )}
+        </>
+    );
+};
+
+export default AuthNavigation;

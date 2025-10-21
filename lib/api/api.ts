@@ -9,13 +9,3 @@ const apiClient = axios.create({
   withCredentials: true, 
 });
 export default apiClient;
-// Аутентифікація:
-
-
-
-// Користувачі:
-
-
-
-
-// Нотатки:
