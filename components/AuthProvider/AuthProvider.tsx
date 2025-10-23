@@ -30,7 +30,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     // 3. Тільки після успішної перевірки сесії отримуємо дані користувача
                     const user = await getCurrentUser();
                     setUser(user);
-                } catch (error) {
+                } catch  {
                     // Цей блок спрацює, якщо будь-який із запитів провалився
                     clearAuthState();
                     router.replace("/sign-in");

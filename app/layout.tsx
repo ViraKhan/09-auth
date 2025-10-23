@@ -1,6 +1,7 @@
 
 import { Roboto } from "next/font/google";
 import "./globals.css";
+import css from "./page.module.css"
 import Header from "../components/Header/Header";
 import TanStackProvider from "../components/TanStackProvider/TanStackProvider";
 import Footer from "../components/Footer/Footer";
@@ -35,9 +36,6 @@ export const metadata: Metadata = {
 };
 
 
-
-
-
 export default function RootLayout({
   children,
   modal,
@@ -51,7 +49,7 @@ export default function RootLayout({
         <TanStackProvider>
         <AuthProvider>
           <Header />
-          <main style={{ flex: 1 }}>
+          <main className={css.main}>
             {children} </main>
             {modal}
           <Footer />
